@@ -26,5 +26,16 @@
      ```
 # Develop the ValidateFramework or Utils classes for Validate the Input jsonString message and consume jsonString messages
 
+# UseCase 5:
+
+java -jar avro-tools-1.8.1.jar compile schema ClickRecordV1.avsc .
+
+It will generate NewClickRecord.java 
+
+specific.avro.reader true ==>Setting code generation here ...
+
+https://github.com/LearningJournal/ApacheKafkaTutorials/blob/master/AvroProducer-V1/AvroProducer.java
+
+
 
 
