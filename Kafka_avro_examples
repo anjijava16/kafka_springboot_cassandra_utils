@@ -1,8 +1,25 @@
 
+java -jar avro-tools-1.8.1.jar compile schema ClickRecordV1.avsc .
+
+It will generate NewClickRecord.java 
+
+specific.avro.reader true ==>Setting code generation here ...
+
+
+
+
+
 https://github.com/aseigneurin/aseigneurin.github.io/blob/master/_posts/2016-03-04-kafka-spark-avro-producing-and-consuming-avro-messages.md
 https://github.com/ScalaConsultants/spark-kafka-avro/blob/master/src/main/scala/io/scalac/spark/AvroConsumer.scala
 https://github.com/mykidong/spark-kafka-simple-consumer-receiver
 https://github.com/dmatrix/examples/tree/master/confluent
+https://saumitra.me/blog/tweet-search-and-analysis-with-kafka-solr-cassandra/
+https://saumitra.me/blog/
+Usecase : https://medium.com/@stephane.maarek/how-to-use-apache-kafka-to-transform-a-batch-pipeline-into-a-real-time-one-831b48a6ad85
+https://github.com/LearningJournal/ApacheKafkaTutorials/blob/master/AvroProducer-V1/AvroProducer.java
+https://www.youtube.com/watch?v=1OdsRuKXWbM
+https://www.youtube.com/watch?v=ig1TnNcULSg
+
 
 LAUNCHING CP COMPONENTS:
 
@@ -27,6 +44,7 @@ CLI PRODUCER/CONSUMER (Blue Terminal D1)
 3. Consume Messages:
 
 			bin/kafka-avro-console-consumer --topic test  --zookeeper localhost:2181 --from-beginning
+			
 
 
 SIMPLE JAVA PRODUCER (Blue Terminal D1)
@@ -53,3 +71,77 @@ TO USE THE SCALA SPARK STREAMING APP
 2. sbt clean package
 3. spark-submit --packages org.apache.spark:spark-streaming_2.10:1.6.0,org.apache.spark:spark-streaming-kafka_2.10:1.6.0,io.confluent:kafka-avro-serializer:1.0.1,org.apache.kafka:kafka_2.10:0.8.2.1,org.slf4j:slf4j-log4j12:1.6.1 --class main.scala.iot.DeviceIoTStreamApp --master local[6] target/scala-2.10/main-scala-iot_2.10-1.0.jar localhost:9092 devices humidity 60
 
+
+
+##################################################################################################
+import org.apache.avro.file.DataFileStream;
+import org.apache.avro.generic.GenericDatumReader;
+import org.apache.avro.generic.GenericRecord;
+import org.apache.avro.io.DatumReader;
+import org.apache.kafka.clients.consumer.Consumer;
+import org.apache.kafka.clients.consumer.ConsumerRecords;
+import org.apache.kafka.clients.consumer.KafkaConsumer;
+import org.apache.kafka.common.serialization.StringDeserializer;
+
+import java.io.ByteArrayInputStream;
+import java.io.File;
+import java.io.IOException;
+import java.util.Collections;
+import java.util.Properties;
+
+public class KafkaConsumerAvroByte {
+private final static String BOOTSTRAP_SERVERS="<KAFKA_BROKER_HOST>:9092";
+private static final String KEYSTORE_FILE_LOCATION = new File("kafka.client.keystore.jks").getAbsolutePath();
+private static final String KEYSTORE_FILE_PASSWORD = "dhgfgspasswd";
+private static final String SSL_KEY_PASSWORD = "dfsfjjkjdk";
+private static final String TRUSTSTORE_FILE_LOCATION = new File("kafka.client.truststore.jks").getAbsolutePath();
+private static final String TRUSTSTORE_FILE_PASSWORD = "UVctH3qsIbdwTc0B";
+
+public static void main(String[] args) throws Exception
+{
+    Properties props = new Properties();
+//Ref:https://github.com/janvanzoggel/apache-kafka/blob/master/src/main/java/nl/rubix/kafka/KafkaConsumerAvroByte.java
+
+    props.put(org.apache.kafka.clients.consumer.ConsumerConfig.BOOTSTRAP_SERVERS_CONFIG,BOOTSTRAP_SERVERS);
+    props.put(org.apache.kafka.clients.consumer.ConsumerConfig.GROUP_ID_CONFIG,"test-group_yh1vdjcschkj2");
+    props.put(org.apache.kafka.clients.consumer.ConsumerConfig.KEY_DESERIALIZER_CLASS_CONFIG,StringDeserializer.class.getName());
+    props.put(org.apache.kafka.clients.consumer.ConsumerConfig.VALUE_DESERIALIZER_CLASS_CONFIG,"org.apache.kafka.common.serialization.ByteArrayDeserializer");
+
+    props.put("security.protocol", "SSL");
+    props.put("ssl.keystore.location", KEYSTORE_FILE_LOCATION);
+    props.put("ssl.keystore.password", KEYSTORE_FILE_PASSWORD);
+    props.put("ssl.key.password", SSL_KEY_PASSWORD);
+    props.put("ssl.truststore.location", TRUSTSTORE_FILE_LOCATION);
+    props.put("ssl.truststore.password", TRUSTSTORE_FILE_PASSWORD);
+    props.put("serializer.class", "kafka.serializer.DefaultEncoder");
+    props.put("max.poll.records","100");
+    props.put("auto.offset.reset", "earliest");
+
+
+    final Consumer<String, byte[]> consumer = new KafkaConsumer<>(props);
+
+    consumer.subscribe(Collections.singletonList("TEST_Topic"));
+    while (true) {
+        final ConsumerRecords<String, byte[]> consumerRecords = consumer.poll(1000);
+        // Decode
+        consumerRecords.forEach(record1 -> {
+            DatumReader<GenericRecord> reader = new GenericDatumReader<GenericRecord>();
+            System.out.println("DECODE reader: " + reader);
+            ByteArrayInputStream is = new ByteArrayInputStream(record1.value());
+            System.out.println("DECODE is: " + is);
+            try {
+                DataFileStream<GenericRecord> dataFileReader = new DataFileStream<GenericRecord>(is, reader);
+                System.out.println("DECODE dataFileReader: " + dataFileReader);
+
+                GenericRecord record = null;
+                while (dataFileReader.hasNext()) {
+                    record = dataFileReader.next(record);
+                    System.out.println(record.getSchema());
+                    System.out.println(record.toString());
+                }
+            }  catch (IOException e) {
+                e.printStackTrace();
+            }
+        });
+    }
+}  }
