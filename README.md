@@ -34,6 +34,7 @@ It will generate NewClickRecord.java
 
 specific.avro.reader true ==>Setting code generation here ...
 
+https://www.confluent.io/blog/apache-kafka-spring-boot-application/
 https://github.com/LearningJournal/ApacheKafkaTutorials/blob/master/AvroProducer-V1/AvroProducer.java
 
 
